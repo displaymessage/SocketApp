@@ -20,12 +20,19 @@ LX::Int LX::SocketApp::Socket(){
 	if(m_bSocketFlag)
 		return LX_OK;
 	m_bSocketFlag = true;
+	m_iSocketFd = socket(m_iSocketDomain, m_iSocketType, m_iSocketProtocol);
+	if(m_iSocketFd <= 0)
+		return -1;
+	return LX_OK;
 }
 
 LX::Int LX::SocketApp::Socket(Int iSocketDomain, Int iSocketType, Int iSocketProtocol){
 	if(m_bSocketFlag)
 		return LX_OK;
-	m_bSocketFlag = true;
+	m_iSocketDomain = iSocketDomain;
+	m_iSocketType = iSocketType;
+	m_iSocketProtocol = iSocketProtocol;
+	Socket();
 }
 
 void LX::SocketApp::CloseFd(){
