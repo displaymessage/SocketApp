@@ -2,26 +2,67 @@
 #define __SOCKET_APP_H__
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string>
 namespace LX{
-	typedef Int int;
-	Int LX_OK = 0;
-	Int LX_FAIL = -1;
+#define LX_OK 0;
+#define LX_FAIL -1;
+	typedef int Int;
+	class SocketPara{
+		public:
+			SocketPara();
+			~SocketPara();
+			SocketPara(const SocketPara& that);
+			SocketPara& operator=(const SocketPara& that);
+			Int GetSockaddr(struct sockaddr_in* servaddr);
+		public:
+			Int m_iSocketDomain;
+			Int m_iSocketType;
+			Int m_iSocketProtocol;
+			Int m_iAddrDomain;
+			std::string m_strIp;
+			unsigned short m_usPort;
+	};
 	class SocketApp{
 		public:
 			SocketApp();
-			SocketApp(Int iSocketDomain, Int iSocketType, Int iSocketProtocol):m_iSocketDomain(iSocketDomain),m_iSocketType(iSocketType),m_iSocketProtocol(iSocketProtocol);
+			SocketApp(SocketPara& socketPara);
 			~SocketApp();
 			Int Socket();
-			Int Socket(Int iSocketDomain, Int iSocketType, Int iSocketProtocol);
+			Int Socket(SocketPara& socketPara);
 			void CloseFd();
 		private:
-		public:
-		private:
+			SocketApp(const SocketApp& that);
+			SocketApp& operator=(const SocketApp& that);
+		protected:
 			Int m_iSocketFd;
 			Int m_iSocketDomain;
 			Int m_iSocketType;
 			Int m_iSocketProtocol;
 			bool m_bSocketFlag;
 	};
+	class SocketServer:public SocketApp{
+		public:
+			SocketServer();
+			SocketServer(SocketPara& socketPara);
+			~SocketServer();
+			Int Bind();
+			Int Bind(SocketPara& socketPara);
+		private:
+			SocketServer(const SocketServer& that);
+			SocketServer& operator=(const SocketServer& that);
+		private:
+			SocketPara m_cSocketPara;
+			bool m_bBindFlag;
+	};
+	/*
+	class SocketClient:public SocketAPP{
+		public:
+			SocketClient();
+			SocketClient(Int iSocketDomain, Int iSocketType, Int iSocketProtocol);
+			~SocketClient();
+	};
+	*/
 };
 #endif
