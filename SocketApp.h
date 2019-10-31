@@ -23,6 +23,7 @@ namespace LX{
 			Int m_iAddrDomain;
 			std::string m_strIp;
 			unsigned short m_usPort;
+			Int m_iListenNum;
 	};
 	class SocketApp{
 		public:
@@ -49,6 +50,8 @@ namespace LX{
 			~SocketServer();
 			Int Bind();
 			Int Bind(SocketPara& socketPara);
+			Int Listen();
+			Int Accept();
 		private:
 			SocketServer(const SocketServer& that);
 			SocketServer& operator=(const SocketServer& that);

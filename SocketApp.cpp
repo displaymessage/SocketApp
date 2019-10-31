@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
-LX::SocketPara::SocketPara():m_iSocketDomain(0),m_iSocketType(0),m_iSocketProtocol(0),m_iAddrDomain(0),m_strIp(""),m_usPort(0){}
+LX::SocketPara::SocketPara():m_iSocketDomain(0),m_iSocketType(0),m_iSocketProtocol(0),m_iAddrDomain(0),m_strIp(""),m_usPort(0),m_iListenNum(0){}
 LX::SocketPara::SocketPara(const SocketPara& that){
 	m_iSocketDomain = that.m_iSocketDomain;
 	m_iSocketType = that.m_iSocketType;
@@ -11,6 +11,7 @@ LX::SocketPara::SocketPara(const SocketPara& that){
 	m_iAddrDomain = that.m_iAddrDomain;
 	m_strIp = that.m_strIp;
 	m_usPort = that.m_usPort;
+	m_iListenNum = that.m_iListenNum;
 }
 LX::SocketPara& LX::SocketPara::operator=(const SocketPara& that){
 	m_iSocketDomain = that.m_iSocketDomain;
@@ -19,6 +20,7 @@ LX::SocketPara& LX::SocketPara::operator=(const SocketPara& that){
 	m_iAddrDomain = that.m_iAddrDomain;
 	m_strIp = that.m_strIp;
 	m_usPort = that.m_usPort;
+	m_iListenNum = that.m_iListenNum;
 	return *this;
 }
 LX::SocketPara::~SocketPara(){}
@@ -97,6 +99,8 @@ LX::SocketServer::~SocketServer(){
 }
 
 LX::Int LX::SocketServer::Bind(){
+	if(m_bBindFlag)
+		return LX_OK;
 	struct sockaddr_in servaddr;
 	m_cSocketPara.GetSockaddr(&servaddr);
 	if(-1 == bind(m_iSocketFd,(struct sockaddr*)&servaddr,sizeof(servaddr))){
@@ -104,13 +108,37 @@ LX::Int LX::SocketServer::Bind(){
 		return LX_FAIL;
 	}
 	std::cout << "LX::SocketServer::Bind() is sucessful!" << std::endl;
+	m_bBindFlag = true;
 	return LX_OK;
 }
 
 LX::Int LX::SocketServer::Bind(SocketPara& socketPara){
+	if(m_bBindFlag)
+		return LX_OK;
 	m_cSocketPara = socketPara;
 	return Bind();
 }
 
+LX::Int LX::SocketServer::Listen(){
+	if(-1 == listen(m_iSocketFd, m_cSocketPara.m_iListenNum)){
+		std::cout << "LX::SocketServer::Listen() is fail! " << strerror(errno) << std::endl;
+		return LX_FAIL;
+	}
+	std::cout << "LX::SocketServer::Listen() is successful! " << std::endl;
+	return LX_OK;
+}
+
+LX::Int LX::SocketServer::Accept(){
+	struct sockaddr clientaddr;
+	socklen_t clientaddrLength;
+	Int iFd = accept(m_iSocketFd, &clientaddr, &clientaddrLength);
+	if(-1 == iFd){
+		std::cout << "LX::SocketServer::Accept() is fail! " << strerror(errno) << std::endl;
+		return LX_FAIL;
+	}
+	return iFd;
+}
+
 LX::SocketServer::SocketServer(const SocketServer& that){}
+
 LX::SocketServer& LX::SocketServer::operator=(const SocketServer& that){}

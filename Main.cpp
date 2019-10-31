@@ -10,4 +10,8 @@ int main(int argv, char* argc[]){
 	LX::SocketServer socketServer(socketPara);
 	socketServer.Socket();
 	socketServer.Bind();
+	socketServer.Bind();
+	socketServer.Listen();
+	socketServer.Listen();
+	socketServer.Accept();
 }
