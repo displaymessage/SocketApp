@@ -1,0 +1,12 @@
+objects=Server.o SocketApp.o
+Main:$(objects)
+	g++ -o Server $(objects)
+
+Server.o:Server.cpp
+	g++ -c Server.cpp
+
+SocketApp.o:SocketApp.cpp
+	g++ -c SocketApp.cpp
+
+clean:
+	rm *.o
