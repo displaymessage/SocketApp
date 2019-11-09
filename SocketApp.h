@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
+#include <iostream>
 namespace LX{
 #define LX_OK 0;
 #define LX_FAIL -1;
@@ -15,7 +16,7 @@ namespace LX{
 			~SocketPara();
 			SocketPara(const SocketPara& that);
 			SocketPara& operator=(const SocketPara& that);
-			Int GetSockaddr(struct sockaddr_in* servaddr);
+			Int GetSockaddr(struct sockaddr_storage* servaddr);
 		public:
 			Int m_iSocketDomain;
 			Int m_iSocketType;
@@ -33,6 +34,8 @@ namespace LX{
 			Int Socket();
 			Int Socket(SocketPara& socketPara);
 			void CloseFd();
+			Int Read(void* buf, Int iLength, Int iSocketFd = 0);
+			Int Write(void* buf, Int iLength, Int iSocketFd = 0);
 		private:
 			SocketApp(const SocketApp& that);
 			SocketApp& operator=(const SocketApp& that);
@@ -59,13 +62,17 @@ namespace LX{
 			SocketPara m_cSocketPara;
 			bool m_bBindFlag;
 	};
-	/*
-	class SocketClient:public SocketAPP{
+	class SocketClient:public SocketApp{
 		public:
 			SocketClient();
-			SocketClient(Int iSocketDomain, Int iSocketType, Int iSocketProtocol);
+			SocketClient(SocketPara& socketPara);
 			~SocketClient();
+			Int Connect(struct sockaddr_storage& servaddr);
+		private:
+			SocketClient(const SocketClient& that);
+			SocketClient& operator=(const SocketClient& that);
+		private:
+			SocketPara m_cSocketPara;
 	};
-	*/
 };
 #endif

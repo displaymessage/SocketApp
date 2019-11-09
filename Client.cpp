@@ -9,7 +9,7 @@ int main(int argv, char* argc[]){
 	socketPara.m_usPort = static_cast<unsigned short>(20000);
 	LX::SocketClient socketClient(socketPara);
 	socketClient.Socket();
-	struct sockaddr_in sSockServer;
+	struct sockaddr_storage sSockServer;
 	socketPara.GetSockaddr(&sSockServer);
 	socketClient.Connect(sSockServer);
 	char message[13] = "Hello World!";
