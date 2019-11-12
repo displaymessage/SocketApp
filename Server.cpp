@@ -15,7 +15,7 @@ int main(int argv, char* argc[]){
 		LX::Int iFd = socketServer.Accept();
 		if(-1 == iFd) return -1;
 		char buf[512] = "";
-		socketServer.Read(buf, sizeof(buf), iFd);
+		socketServer.ReadLine((void*)buf, sizeof(buf), iFd);
 		std::cout << buf << std::endl;
 	}
 }

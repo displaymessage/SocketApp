@@ -49,12 +49,18 @@ LX::SocketApp::SocketApp(){
 	m_iSocketType = 0;
 	m_iSocketProtocol = 0;
 	m_bSocketFlag = false;
+	m_strReadBuf = "";
+	m_iCurReadPosition = 0;
+	m_iReadBufSize = 1024;
 	std::cout<< "LX::SocketApp::SocketApp() is exec." << std::endl;
 }
 
 LX::SocketApp::SocketApp(SocketPara& socketPara):m_iSocketDomain(socketPara.m_iSocketDomain),m_iSocketType(socketPara.m_iSocketType),m_iSocketProtocol(socketPara.m_iSocketProtocol){
 	m_iSocketFd = 0;
 	m_bSocketFlag = false;
+	m_strReadBuf = "";
+	m_iCurReadPosition = 0;
+	m_iReadBufSize = 1024;
 	std::cout << "LX::SocketApp::SocketApp(SocketPara& socketPara) is exec." << std::endl;
 }
 
@@ -92,26 +98,63 @@ void LX::SocketApp::CloseFd(){
 	close(m_iSocketFd);
 }
 
-LX::Int LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd){
-	bzero(buf, iLength);
-	if(0 == iSocketFd)
-		iSocketFd = m_iSocketFd;
-	void* pbuf = buf;
-	Int iBufSize = iLength;
-	Int iRead = 0;
-	while((0 != (iRead = read(iSocketFd, pbuf, iBufSize)))&& 0 < iBufSize){
-		iBufSize = iBufSize - iRead;
-		pbuf = buf + iRead;
-	}
-	if(-1 == iRead){
-		std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is fail! " << strerror(errno) << std::endl;
+LX::Int LX::SocketApp::Read(char* buf, Int iSocketFd){
+	if(NULL == buf){
+		std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is fail! buf is null!" << std::endl; 
 		return LX_FAIL;
 	}
-	std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is exec." << std::endl;
-	return LX_OK;
+	std::cout << "5" << std::endl;
+	Int iRet = LX_OK;
+	if(m_iCurReadPosition < m_strReadBuf.length() && 0 != m_strReadBuf.length()){
+		std::cout << "1" << std::endl;
+		*buf = m_strReadBuf[m_iCurReadPosition];
+		++m_iCurReadPosition;
+		iRet = 1;
+		std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is exec! date from readBuf." << std::endl;
+	}
+	else{
+		std::cout << "6" << std::endl;
+		char szBuf[m_iReadBufSize];
+		bzero(szBuf, m_iReadBufSize);
+		if(0 == iSocketFd)
+			iSocketFd = m_iSocketFd;
+		void* pbuf = szBuf;
+		Int iBufSize = m_iReadBufSize;
+		Int iRead = 0;
+		while((0 < (iRead = read(iSocketFd, pbuf, iBufSize)))){
+			iBufSize = iBufSize - iRead;
+			pbuf = szBuf + iRead;
+		}
+		if(iBufSize == m_iReadBufSize){
+			m_strReadBuf = "";
+			m_iCurReadPosition = 0;
+			if(0 == iRead){
+				std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is exec! fd no date." << std::endl;
+				iRet = LX_OK;
+			}
+			else{
+				std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is fail! " << strerror(errno) << std::endl;
+				iRet = LX_FAIL;
+			}
+		}
+		else{
+			std::cout << "2" << std::endl;
+			m_strReadBuf = szBuf;
+			m_iCurReadPosition = 0;
+			*buf = m_strReadBuf[m_iCurReadPosition];
+			++m_iCurReadPosition;
+			iRet = 1;
+			std::cout << "LX::SocketApp::Read(void* buf, Int iLength, Int iSocketFd = 0) is exec! date from fd." << std::endl;
+		}
+	}
+	return iRet;
 }
 
 LX::Int LX::SocketApp::Write(void* buf, Int iLength, Int iSocketFd){
+	if(NULL == buf || 1 >= iLength){
+		std::cout << "LX::SocketApp::Write(void* buf, Int iLength, Int iSocketFd) is fail! buf is null or iLength <= 1!" << std::endl;
+		return LX_FAIL;
+	}
 	if(0 == iSocketFd)
 		iSocketFd = m_iSocketFd;
 	void* pBuf = buf;
@@ -128,6 +171,30 @@ LX::Int LX::SocketApp::Write(void* buf, Int iLength, Int iSocketFd){
 	}while(iWrite);
 	std::cout << "LX::SocketApp::Write(void* buf, Int iLength, Int iSocketFd) is exec." << std::endl;
 	return LX_OK;
+}
+
+LX::Int LX::SocketApp::ReadLine(void* buf, Int iBufSize, Int iSocketFd){
+	if(NULL == buf || 1 >= iBufSize){
+		std::cout << "LX::SocketApp::ReadLine(void* buf, Int iBufSize, Int iSocketFd) is fail! buf is null or iBufSize <= 1! " << std::endl;
+		return LX_FAIL;
+	}
+	std::cout << "3" << std::endl;
+	char* pBuf = static_cast<char*>(buf);
+	char* pCurBuf = pBuf;
+	bzero(buf, iBufSize);
+	Int iResult = LX_OK;
+	std::cout << "4" << std::endl;
+	for(Int iLength = 1; iLength < iBufSize; ++iLength, ++pCurBuf){
+		if(1 == (iResult = Read(pCurBuf, iSocketFd))){
+			if('\n' == *(pBuf + iLength - 1))
+				return iLength;
+		}
+		else if(LX_OK == iResult){
+			return iLength - 1;
+		}
+		else
+			return LX_FAIL;
+	}
 }
 
 LX::SocketApp::SocketApp(const SocketApp& that){}
@@ -184,6 +251,7 @@ LX::Int LX::SocketServer::Accept(){
 		std::cout << "LX::SocketServer::Accept() is fail! " << strerror(errno) << std::endl;
 		return LX_FAIL;
 	}
+	std::cout << "LX::SocketServer::Accept() is exec! " << std::endl;
 	return iFd;
 }
 
